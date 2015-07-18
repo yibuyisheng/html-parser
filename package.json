@@ -1,0 +1,14 @@
+{
+  "name": "html-parser",
+  "version": "1.0.0",
+  "description": "html 解析器",
+  "main": "index.js",
+  "scripts": {
+    "test": "babel-node test/parser.js"
+  },
+  "author": "yibuyisheng",
+  "license": "ISC",
+  "dependencies": {
+    "babel": "^5.6.23"
+  }
+}
