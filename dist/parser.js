@@ -200,7 +200,7 @@ function normalTag(parser, next) {
 
             case 3:
                 if (!true) {
-                    context$1$0.next = 48;
+                    context$1$0.next = 56;
                     break;
                 }
 
@@ -211,7 +211,7 @@ function normalTag(parser, next) {
                 value = context$1$0.sent;
 
                 if (!(value.type === 'tag')) {
-                    context$1$0.next = 45;
+                    context$1$0.next = 53;
                     break;
                 }
 
@@ -225,7 +225,7 @@ function normalTag(parser, next) {
                     attrs: parseAttr(value.startStr, value.tag),
                     children: []
                 });
-                context$1$0.next = 43;
+                context$1$0.next = 51;
                 break;
 
             case 12:
@@ -248,7 +248,7 @@ function normalTag(parser, next) {
                 }
 
                 parser.emit('tag', tagObj);
-                context$1$0.next = 43;
+                context$1$0.next = 51;
                 break;
 
             case 18:
@@ -271,12 +271,12 @@ function normalTag(parser, next) {
                 }
 
                 parser.emit('tag', tagObj);
-                context$1$0.next = 43;
+                context$1$0.next = 51;
                 break;
 
             case 24:
                 if (!(value.tag.slice(0, 1) === '/')) {
-                    context$1$0.next = 40;
+                    context$1$0.next = 48;
                     break;
                 }
 
@@ -291,16 +291,32 @@ function normalTag(parser, next) {
                 hasMatch = false;
                 i = undefined;
                 tagObj = undefined;
+                i = queue.length - 1;
 
-                for (i = queue.length - 1; i >= 0; i--) {
-                    tagObj = queue[i];
-                    if ('/' + tagObj.tag === value.tag) {
-                        hasMatch = true;
-                    }
+            case 31:
+                if (!(i >= 0)) {
+                    context$1$0.next = 39;
+                    break;
                 }
 
+                tagObj = queue[i];
+
+                if (!('/' + tagObj.tag === value.tag)) {
+                    context$1$0.next = 36;
+                    break;
+                }
+
+                hasMatch = true;
+                return context$1$0.abrupt('break', 39);
+
+            case 36:
+                i--;
+                context$1$0.next = 31;
+                break;
+
+            case 39:
                 if (!hasMatch) {
-                    context$1$0.next = 37;
+                    context$1$0.next = 45;
                     break;
                 }
 
@@ -308,28 +324,27 @@ function normalTag(parser, next) {
                 // 并且没有子节点。
                 // 此处需要纠正一下，同时它们的共同父节点是 queue[i]
                 if (i + 1) {
-                    for (j = i + 1, jl = queue.length - 1; j < jl; j++) {
+                    for (j = i + 1, jl = queue.length; j < jl; j++) {
                         queue[j].children = [];
                         queue[j].parent = queue[i];
+                        parser.emit('tag', queue[j]);
                     }
                 }
 
-                for (j = i + 1; j < queue.length - 1; j++) {
-                    parser.emit('tag', queue[j]);
-                }
+                parser.emit('tag', queue[i]);
 
                 queue = queue.slice(0, i);
-                context$1$0.next = 38;
+                context$1$0.next = 46;
                 break;
 
-            case 37:
+            case 45:
                 throw new Error('错误的结束标签 <' + value.tag + '>。');
 
-            case 38:
-                context$1$0.next = 43;
+            case 46:
+                context$1$0.next = 51;
                 break;
 
-            case 40:
+            case 48:
                 tagObj = {
                     tag: value.tag,
                     attrs: parseAttr(value.startStr, value.tag),
@@ -344,11 +359,11 @@ function normalTag(parser, next) {
                 }
                 queue.push(tagObj);
 
-            case 43:
-                context$1$0.next = 46;
+            case 51:
+                context$1$0.next = 54;
                 break;
 
-            case 45:
+            case 53:
                 if (value.type === 'text') {
                     obj = { tag: '#text', content: value.content };
 
@@ -363,19 +378,19 @@ function normalTag(parser, next) {
                     parser.emit('tag', obj);
                 }
 
-            case 46:
+            case 54:
                 context$1$0.next = 3;
                 break;
 
-            case 48:
-                context$1$0.prev = 48;
-                return context$1$0.finish(48);
+            case 56:
+                context$1$0.prev = 56;
+                return context$1$0.finish(56);
 
-            case 50:
+            case 58:
             case 'end':
                 return context$1$0.stop();
         }
-    }, marked0$0[1], this, [[2,, 48, 50]]);
+    }, marked0$0[1], this, [[2,, 56, 58]]);
 }
 
 exports['default'] = function (tplStr) {

@@ -157,6 +157,7 @@ function* normalTag(parser, next) {
                         tagObj = queue[i];
                         if (`/${tagObj.tag}` === value.tag) {
                             hasMatch = true;
+                            break;
                         }
                     }
 
@@ -165,15 +166,14 @@ function* normalTag(parser, next) {
                         // 并且没有子节点。
                         // 此处需要纠正一下，同时它们的共同父节点是 queue[i]
                         if (i + 1) {
-                            for (let j = i + 1, jl = queue.length - 1; j < jl; j++) {
+                            for (let j = i + 1, jl = queue.length; j < jl; j++) {
                                 queue[j].children = [];
                                 queue[j].parent = queue[i];
+                                parser.emit('tag', queue[j]);
                             }
                         }
 
-                        for (let j = i + 1; j < queue.length - 1; j++) {
-                            parser.emit('tag', queue[j]);
-                        }
+                        parser.emit('tag', queue[i]);
 
                         queue = queue.slice(0, i);
                     }
