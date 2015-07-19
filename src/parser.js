@@ -212,6 +212,7 @@ function* normalTag(parser, next) {
             }
         }
     } finally {
+        parser.emit('end');
     }
 
     // 解析属性字符串
