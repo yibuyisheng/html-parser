@@ -117,6 +117,7 @@ function* normalTag(parser, next) {
                     } else {
                         let lastOfQueue = queue[queue.length - 1];
                         lastOfQueue.children.push(tagObj);
+                        tagObj.parent = lastOfQueue;
                     }
                 }
                 // 如果是类似于 <hr /> 、 <br /> 这种的标签
@@ -132,6 +133,7 @@ function* normalTag(parser, next) {
                     } else {
                         let lastOfQueue = queue[queue.length - 1];
                         lastOfQueue.children.push(tagObj);
+                        tagObj.parent = lastOfQueue;
                     }
                 }
                 // 如果是结束标签
@@ -149,7 +151,18 @@ function* normalTag(parser, next) {
                             hasMatch = true;
                         }
                     }
+
                     if (hasMatch) {
+                        // 从 i+1 到 queue.length-1 的元素是兄弟节点的关系，
+                        // 并且没有子节点。
+                        // 此处需要纠正一下，同时它们的共同父节点是 queue[i]
+                        if (i + 1) {
+                            for (let j = i + 1, jl = queue.length - 1; j < jl; j++) {
+                                queue[j].children = [];
+                                queue[j].parent = queue[i];
+                            }
+                        }
+
                         queue = queue.slice(0, i);
                         if (!queue.length) {
                             emitTagInfo(tagObj);
@@ -170,7 +183,9 @@ function* normalTag(parser, next) {
                         children: []
                     };
                     if (queue.length) {
-                        queue[queue.length - 1].children.push(tagObj);
+                        let lastOfQueue = queue[queue.length - 1];
+                        lastOfQueue.children.push(tagObj);
+                        tagObj.parent = lastOfQueue;
                     }
                     queue.push(tagObj);
                 }
@@ -181,7 +196,9 @@ function* normalTag(parser, next) {
 
                 // 如果 queue 不为空，则当前的文本节点是 queue 最后一个元素的儿子
                 if (queue.length) {
-                    queue[queue.length - 1].children.push(obj);
+                    let lastOfQueue = queue[queue.length - 1];
+                    lastOfQueue.children.push(obj);
+                    obj.parent = lastOfQueue;
                 }
             }
         }
