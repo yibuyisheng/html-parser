@@ -107,8 +107,8 @@ function* normalTag(parser, next) {
                 // 已经有了 children ，不再往下解析
                 if (value.children instanceof Array) {
                     let tagObj = {
-                        tag: value.tag.replace(/\/$/, ''),
-                        attrs: parseAttr(value.startStr.replace(value.tag, '')),
+                        tag: value.tag === '!--' ? '#comment' : value.tag.replace(/\/$/, ''),
+                        attrs: parseAttr(value.startStr, value.tag),
                         children: value.children
                     };
 
@@ -123,7 +123,7 @@ function* normalTag(parser, next) {
                 else if (value.startStr.slice(-1) === '/') {
                     let tagObj = {
                         tag: value.tag.replace(/\/$/, ''),
-                        attrs: parseAttr(value.startStr.replace(value.tag, '').replace(/\/$/, '')),
+                        attrs: parseAttr(value.startStr, value.tag),
                         children: []
                     };
 
@@ -166,7 +166,7 @@ function* normalTag(parser, next) {
                 else {
                     let tagObj = {
                         tag: value.tag,
-                        attrs: parseAttr(value.startStr.replace(value.tag, '')),
+                        attrs: parseAttr(value.startStr, value.tag),
                         children: []
                     };
                     if (queue.length) {
@@ -192,9 +192,10 @@ function* normalTag(parser, next) {
     }
 
     // 解析属性字符串
-    function parseAttr(str) {
+    function parseAttr(startStr, tagName) {
+        startStr = startStr.replace(new RegExp(tagName, 'i'), '');
         let obj = {};
-        for (let pair of str.split(/\s/)) {
+        for (let pair of startStr.split(/\s/)) {
             if (!pair.replace(/\s/g, '')) {
                 continue;
             }
