@@ -100,25 +100,33 @@ function* normalTag(parser, next) {
     let queue = []; // 标签对象队列
 
     try {
+        // 遍历顺序，子孙 -> 祖先
         while (true) {
             let value = yield;
             // 如果是普通标签，则要解析出来属性、内容
             if (value.type === 'tag') {
+                if (value.tag === '!doctype') {
+                    parser.emit('tag', {
+                        tag: value.tag,
+                        attrs: parseAttr(value.startStr, value.tag),
+                        children: []
+                    });
+                }
                 // 已经有了 children ，不再往下解析
-                if (value.children instanceof Array) {
+                else if (value.children instanceof Array) {
                     let tagObj = {
                         tag: value.tag === '!--' ? '#comment' : value.tag.replace(/\/$/, ''),
                         attrs: parseAttr(value.startStr, value.tag),
                         children: value.children
                     };
 
-                    if (!queue.length) {
-                        emitTagInfo(tagObj);
-                    } else {
+                    if (queue.length) {
                         let lastOfQueue = queue[queue.length - 1];
                         lastOfQueue.children.push(tagObj);
                         tagObj.parent = lastOfQueue;
                     }
+
+                    parser.emit('tag', tagObj);
                 }
                 // 如果是类似于 <hr /> 、 <br /> 这种的标签
                 else if (value.startStr.slice(-1) === '/') {
@@ -128,13 +136,13 @@ function* normalTag(parser, next) {
                         children: []
                     };
 
-                    if (!queue.length) {
-                        emitTagInfo(tagObj);
-                    } else {
+                    if (queue.length) {
                         let lastOfQueue = queue[queue.length - 1];
                         lastOfQueue.children.push(tagObj);
                         tagObj.parent = lastOfQueue;
                     }
+
+                    parser.emit('tag', tagObj);
                 }
                 // 如果是结束标签
                 else if (value.tag.slice(0, 1) === '/') {
@@ -163,19 +171,18 @@ function* normalTag(parser, next) {
                             }
                         }
 
-                        queue = queue.slice(0, i);
-                        if (!queue.length) {
-                            emitTagInfo(tagObj);
+                        for (let j = i + 1; j < queue.length - 1; j++) {
+                            parser.emit('tag', queue[j]);
                         }
+
+                        queue = queue.slice(0, i);
                     }
                     // 没找到匹配，有问题
                     else {
                         throw new Error(`错误的结束标签 <${value.tag}>。`);
                     }
                 }
-                // 如果是开始标签，则构造一个关于该标签的对象 tagObj，
-                // 而且根据由上至下的 html 字符串解析流程，
-                // 后面的 tag 肯定是前面 tag 的儿子
+                // 如果是开始标签
                 else {
                     let tagObj = {
                         tag: value.tag,
@@ -200,12 +207,11 @@ function* normalTag(parser, next) {
                     lastOfQueue.children.push(obj);
                     obj.parent = lastOfQueue;
                 }
+
+                parser.emit('tag', obj);
             }
         }
     } finally {
-        if (queue.length) {
-            emitTagInfo(queue[0]);
-        }
     }
 
     // 解析属性字符串
@@ -221,19 +227,6 @@ function* normalTag(parser, next) {
             obj[key] = value;
         }
         return obj;
-    }
-
-    // 抛出一颗标签树的信息
-    function emitTagInfo(rootTag) {
-        if (Object.prototype.toString.call(rootTag) === '[object String]'
-            || !(rootTag.children instanceof Array)
-        ) {
-            return;
-        }
-        parser.emit('tag', rootTag);
-        for (let tagObj of rootTag.children) {
-            emitTagInfo(tagObj);
-        }
     }
 }
 

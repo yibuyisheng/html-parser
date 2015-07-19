@@ -149,41 +149,10 @@ function tag(parser, next) {
  * 处理普通标签（除了script、style）
  */
 function normalTag(parser, next) {
-    var queue, value, tagObj, lastOfQueue, hasMatch, i, j, jl, obj, parseAttr, emitTagInfo;
+    var queue, value, tagObj, lastOfQueue, hasMatch, i, j, jl, obj, parseAttr;
     return regeneratorRuntime.wrap(function normalTag$(context$1$0) {
         while (1) switch (context$1$0.prev = context$1$0.next) {
             case 0:
-                emitTagInfo = function emitTagInfo(rootTag) {
-                    if (Object.prototype.toString.call(rootTag) === '[object String]' || !(rootTag.children instanceof Array)) {
-                        return;
-                    }
-                    parser.emit('tag', rootTag);
-                    var _iteratorNormalCompletion2 = true;
-                    var _didIteratorError2 = false;
-                    var _iteratorError2 = undefined;
-
-                    try {
-                        for (var _iterator2 = rootTag.children[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-                            var tagObj = _step2.value;
-
-                            emitTagInfo(tagObj);
-                        }
-                    } catch (err) {
-                        _didIteratorError2 = true;
-                        _iteratorError2 = err;
-                    } finally {
-                        try {
-                            if (!_iteratorNormalCompletion2 && _iterator2['return']) {
-                                _iterator2['return']();
-                            }
-                        } finally {
-                            if (_didIteratorError2) {
-                                throw _iteratorError2;
-                            }
-                        }
-                    }
-                };
-
                 parseAttr = function parseAttr(startStr, tagName) {
                     startStr = startStr.replace(new RegExp(tagName, 'i'), '');
                     var obj = {};
@@ -227,27 +196,41 @@ function normalTag(parser, next) {
                 };
 
                 queue = [];
-                context$1$0.prev = 3;
+                context$1$0.prev = 2;
 
-            case 4:
+            case 3:
                 if (!true) {
-                    context$1$0.next = 43;
+                    context$1$0.next = 48;
                     break;
                 }
 
-                context$1$0.next = 7;
+                context$1$0.next = 6;
                 return;
 
-            case 7:
+            case 6:
                 value = context$1$0.sent;
 
                 if (!(value.type === 'tag')) {
-                    context$1$0.next = 40;
+                    context$1$0.next = 45;
                     break;
                 }
 
+                if (!(value.tag === '!doctype')) {
+                    context$1$0.next = 12;
+                    break;
+                }
+
+                parser.emit('tag', {
+                    tag: value.tag,
+                    attrs: parseAttr(value.startStr, value.tag),
+                    children: []
+                });
+                context$1$0.next = 43;
+                break;
+
+            case 12:
                 if (!(value.children instanceof Array)) {
-                    context$1$0.next = 14;
+                    context$1$0.next = 18;
                     break;
                 }
 
@@ -257,20 +240,20 @@ function normalTag(parser, next) {
                     children: value.children
                 };
 
-                if (!queue.length) {
-                    emitTagInfo(tagObj);
-                } else {
+                if (queue.length) {
                     lastOfQueue = queue[queue.length - 1];
 
                     lastOfQueue.children.push(tagObj);
                     tagObj.parent = lastOfQueue;
                 }
-                context$1$0.next = 38;
+
+                parser.emit('tag', tagObj);
+                context$1$0.next = 43;
                 break;
 
-            case 14:
+            case 18:
                 if (!(value.startStr.slice(-1) === '/')) {
-                    context$1$0.next = 19;
+                    context$1$0.next = 24;
                     break;
                 }
 
@@ -280,31 +263,31 @@ function normalTag(parser, next) {
                     children: []
                 };
 
-                if (!queue.length) {
-                    emitTagInfo(tagObj);
-                } else {
+                if (queue.length) {
                     lastOfQueue = queue[queue.length - 1];
 
                     lastOfQueue.children.push(tagObj);
                     tagObj.parent = lastOfQueue;
                 }
-                context$1$0.next = 38;
+
+                parser.emit('tag', tagObj);
+                context$1$0.next = 43;
                 break;
 
-            case 19:
+            case 24:
                 if (!(value.tag.slice(0, 1) === '/')) {
-                    context$1$0.next = 35;
+                    context$1$0.next = 40;
                     break;
                 }
 
                 if (queue.length) {
-                    context$1$0.next = 22;
+                    context$1$0.next = 27;
                     break;
                 }
 
                 throw new Error('<' + value.tag + '> 结束标签前面未找到相应的开始标签。');
 
-            case 22:
+            case 27:
                 hasMatch = false;
                 i = undefined;
                 tagObj = undefined;
@@ -317,7 +300,7 @@ function normalTag(parser, next) {
                 }
 
                 if (!hasMatch) {
-                    context$1$0.next = 32;
+                    context$1$0.next = 37;
                     break;
                 }
 
@@ -331,21 +314,22 @@ function normalTag(parser, next) {
                     }
                 }
 
-                queue = queue.slice(0, i);
-                if (!queue.length) {
-                    emitTagInfo(tagObj);
+                for (j = i + 1; j < queue.length - 1; j++) {
+                    parser.emit('tag', queue[j]);
                 }
-                context$1$0.next = 33;
-                break;
 
-            case 32:
-                throw new Error('错误的结束标签 <' + value.tag + '>。');
-
-            case 33:
+                queue = queue.slice(0, i);
                 context$1$0.next = 38;
                 break;
 
-            case 35:
+            case 37:
+                throw new Error('错误的结束标签 <' + value.tag + '>。');
+
+            case 38:
+                context$1$0.next = 43;
+                break;
+
+            case 40:
                 tagObj = {
                     tag: value.tag,
                     attrs: parseAttr(value.startStr, value.tag),
@@ -360,11 +344,11 @@ function normalTag(parser, next) {
                 }
                 queue.push(tagObj);
 
-            case 38:
-                context$1$0.next = 41;
+            case 43:
+                context$1$0.next = 46;
                 break;
 
-            case 40:
+            case 45:
                 if (value.type === 'text') {
                     obj = { tag: '#text', content: value.content };
 
@@ -375,25 +359,23 @@ function normalTag(parser, next) {
                         lastOfQueue.children.push(obj);
                         obj.parent = lastOfQueue;
                     }
+
+                    parser.emit('tag', obj);
                 }
-
-            case 41:
-                context$1$0.next = 4;
-                break;
-
-            case 43:
-                context$1$0.prev = 43;
-
-                if (queue.length) {
-                    emitTagInfo(queue[0]);
-                }
-                return context$1$0.finish(43);
 
             case 46:
+                context$1$0.next = 3;
+                break;
+
+            case 48:
+                context$1$0.prev = 48;
+                return context$1$0.finish(48);
+
+            case 50:
             case 'end':
                 return context$1$0.stop();
         }
-    }, marked0$0[1], this, [[3,, 43, 46]]);
+    }, marked0$0[1], this, [[2,, 48, 50]]);
 }
 
 exports['default'] = function (tplStr) {
@@ -433,6 +415,8 @@ module.exports = exports['default'];
 // 如果是注释的话，其内部的小于大于等特殊符号也要一般化处理
 // 标签对象队列
 
+// 遍历顺序，子孙 -> 祖先
+
 // 如果是普通标签，则要解析出来属性、内容
 
 // 已经有了 children ，不再往下解析
@@ -444,13 +428,9 @@ module.exports = exports['default'];
 
 // 没找到匹配，有问题
 
-// 如果是开始标签，则构造一个关于该标签的对象 tagObj，
-// 而且根据由上至下的 html 字符串解析流程，
-// 后面的 tag 肯定是前面 tag 的儿子
+// 如果是开始标签
 
 // 如果是文本，则稍微包装一下就行了
 
 // 解析属性字符串
-
-// 抛出一颗标签树的信息
 
