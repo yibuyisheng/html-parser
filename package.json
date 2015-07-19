@@ -4,7 +4,8 @@
   "description": "html 解析器",
   "main": "index.js",
   "scripts": {
-    "test": "babel-node test/parser.js"
+    "test": "npm run build && babel-node test/parser.js",
+    "build": "babel src/parser.js > dist/parser.js"
   },
   "author": "yibuyisheng",
   "license": "ISC",
